@@ -1,0 +1,65 @@
+# ✅ Python cache & compiled files
+__pycache__/
+*.py[cod]
+*.so
+
+# ✅ Virtual environment
+venv/
+env/
+.venv/
+
+# ✅ Environment & secrets
+*.env
+.env
+.env.*  # .env.dev, .env.prod, etc
+config.json
+settings_local.py
+
+# ✅ Logs
+*.log
+logs/
+debug.log
+uvicorn.log
+
+# ✅ Databases (SQLite or other local files)
+*.sqlite3
+*.db
+*.db-journal
+
+# ✅ Static / media (if generated)
+static/
+media/
+
+# ✅ Alembic / migrations cache
+alembic/versions/*.pyc
+alembic.ini
+
+# ✅ Cache directories (pip, pytest, mypy, coverage)
+pip-wheel-metadata/
+pip-cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ✅ Build / dist
+build/
+dist/
+*.egg-info/
+
+# ✅ Jupyter notebooks (если используешь для аналитики)
+.ipynb_checkpoints/
+
+# ✅ IDE / Editor
+.idea/
+.vscode/
+*.code-workspace
+
+# ✅ OS system files
+.DS_Store
+Thumbs.db
+
+# ✅ Docker
+*.pid
+*.pid.lock
