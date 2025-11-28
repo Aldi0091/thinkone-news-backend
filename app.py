@@ -1,11 +1,11 @@
 import os
-from datetime import datetime
+
 from typing import List, Optional, Dict, Any
 
 from fastapi import FastAPI, Query, HTTPException, Path, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, HttpUrl
+
 from telethon import TelegramClient
 from telethon.tl.types import Message
 from telethon.errors import UsernameInvalidError, UsernameNotOccupiedError
@@ -23,7 +23,6 @@ API_ID = int(os.getenv("API_ID", "0"))
 API_HASH = os.getenv("API_HASH", "")
 CORS_ORIGINS = (os.getenv("CORS_ORIGINS") or "http://localhost:5174").split(",")
 
-# список каналов по умолчанию (через ENV)
 DEFAULT_CHANNELS = [c.strip() for c in (os.getenv("TG_CHANNELS") or "").split(",") if c.strip()]
 
 app = FastAPI(title="ThinkOne Telegram News API")
@@ -48,27 +47,6 @@ async def on_startup():
 @app.on_event("shutdown")
 async def on_shutdown():
     await tg_client.disconnect()
-
-
-class NewsItem(BaseModel):
-    id: str
-    channel_id: int
-    channel_username: Optional[str] = None
-    channel_title: str
-    title: str
-    text: str
-    source: str
-    sourceUrl: Optional[HttpUrl] = None
-    url: Optional[HttpUrl] = None
-    summary: Optional[str] = None
-    publishedAt: datetime
-    tags: List[str] = []
-    media: Optional[Dict[str, Any]] = None  # { kind: photo|video|document, proxyUrl: str, mime: str|null, size: int|null }
-
-class NewsList(BaseModel):
-    total: int
-    items: List[NewsItem]
-    next_offset: Optional[int] = None 
 
 
 async def resolve_channel(entity: str):
