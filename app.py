@@ -37,21 +37,19 @@ app.add_middleware(
     expose_headers=["X-TG-Errors"],
 )
 
-# Глобальный Telethon-клиент, использует ранее созданную сессию "tg.session"
 tg_client = TelegramClient("tg", API_ID, API_HASH)
 
 @app.on_event("startup")
 async def on_startup():
     await tg_client.connect()
     if not await tg_client.is_user_authorized():
-        # если почему-то потеряли авторизацию — явно сказать
         raise RuntimeError("Telegram session is not authorized. Run tg_login.py first.")
 
 @app.on_event("shutdown")
 async def on_shutdown():
     await tg_client.disconnect()
 
-# ---------- Схемы ----------
+
 class NewsItem(BaseModel):
     id: str
     channel_id: int
@@ -73,7 +71,6 @@ class NewsList(BaseModel):
     next_offset: Optional[int] = None 
 
 
-# ---------- Утилиты ----------
 async def resolve_channel(entity: str):
     """
     entity: @username | username | https://t.me/username | numeric id
@@ -82,7 +79,6 @@ async def resolve_channel(entity: str):
     try:
         return await tg_client.get_entity(e)
     except (UsernameInvalidError, UsernameNotOccupiedError):
-        # возможно, это numeric id
         try:
             return await tg_client.get_entity(int(e))
         except Exception as ex:
@@ -91,10 +87,9 @@ async def resolve_channel(entity: str):
         raise HTTPException(400, f"Cannot resolve channel '{entity}': {ex}")
 
 def pick_title_and_url(msg: Message):
-    # у каналов часто вся новость в msg.message; title возьмём из первых 80 символов
     text = (msg.message or "").strip()
     title = text.split("\n", 1)[0][:120] or "Post"
-    # если есть web preview, можно вытащить url
+
     url = None
     if getattr(msg, "media", None) and getattr(msg.media, "webpage", None):
         url = getattr(msg.media.webpage, "url", None)
@@ -113,7 +108,6 @@ def media_info(msg: Message) -> Optional[Dict[str, Any]]:
         return {"kind": "document", "mime": mime, "size": size}
     return None
 
-# ---------- Эндпоинты ----------
 @app.get("/api/health")
 def health():
     return {"ok": True}
@@ -129,7 +123,7 @@ async def get_news(
     limit: int = Query(default=30, ge=1, le=200),
     offset_id: int = Query(default=0, ge=0, description="for infinite scroll, Telegram message id offset"),
     sort: str = Query(default="newest", pattern="^(newest|oldest|source)$"),
-    response: Response = None,  # <-- получаем Response от FastAPI
+    response: Response = None,
 ):
     chan_list = [c.strip() for c in (channels.split(",") if channels else DEFAULT_CHANNELS) if c.strip()]
     if not chan_list:
@@ -197,7 +191,6 @@ async def get_news(
         except Exception:
             next_offset = None
 
-    # корректно выставляем заголовок с ошибками (если были)
     if response is not None and errors:
         response.headers["X-TG-Errors"] = "; ".join(f"{k}:{v}" for k, v in errors.items())
 
@@ -213,15 +206,12 @@ async def proxy_media(
     channel_id: int = Path(...),
     message_id: int = Path(...)
 ):
-    """
-    Проксируем медиа по запросу фронта (не храним на диске).
-    """
+
     ent = await tg_client.get_entity(channel_id)
     msg: Message = await tg_client.get_messages(ent, ids=message_id)
     if not msg or not (msg.photo or msg.video or msg.document):
         raise HTTPException(404, "Media not found")
 
-    # Сливаем в память буфером, для больших видео лучше писать на диск/в S3
     buf = io.BytesIO()
     await tg_client.download_media(msg, file=buf)
     buf.seek(0)
