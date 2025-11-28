@@ -6,6 +6,7 @@ from fastapi import FastAPI, Query, HTTPException, Path, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
+from .schemas import NewsItem, NewsList
 from telethon import TelegramClient
 from telethon.tl.types import Message
 from telethon.errors import UsernameInvalidError, UsernameNotOccupiedError
@@ -13,6 +14,8 @@ from dotenv import load_dotenv
 import asyncio
 import io
 import logging
+
+
 
 logger = logging.getLogger("thinkone")
 logging.basicConfig(level=logging.INFO)
